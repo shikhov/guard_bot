@@ -19,4 +19,4 @@ tasks:
           docker build $APPNAME -t $APPNAME-image
           docker stop $APPNAME || true
           docker rm $APPNAME || true
-          docker run -d --network reproxy -e WEBAPP_HOST=$HOST -e WEBAPP_PATH=$APPNAME -e TOKEN=$TOKEN --name $APPNAME --restart=always $APPNAME-image
+          docker run -d --network reproxy -e WEBAPP_HOST=$HOST -e WEBAPP_PATH="/$APPNAME" -e TOKEN=$TOKEN --name $APPNAME --restart=always $APPNAME-image
