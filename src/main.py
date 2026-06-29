@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import ChatJoinRequest
+import urllib
 
 import webapp.routes
 
@@ -21,9 +22,14 @@ dp = Dispatcher()
 @dp.chat_join_request()
 async def handle_join_request(request: ChatJoinRequest, bot: Bot):
     if request.query_id:
+        params = {
+            'query_id': request.query_id,
+            'title': request.chat.title
+        }
+        query_string = urllib.parse.urlencode(params, doseq=True)
         await bot.send_chat_join_request_web_app(
             chat_join_request_query_id=request.query_id,
-            web_app_url=f'{WEBAPP_URL}/join_request?query_id={request.query_id}'
+            web_app_url=f'{WEBAPP_URL}/join_request?{query_string}'
         )
 
 

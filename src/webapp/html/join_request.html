@@ -121,7 +121,7 @@
 </head>
 <body>
     <main class="join-request">
-        <h1>Добро пожаловать</h1>
+        <h1 id="welcomeTitle">Добро пожаловать</h1>
         <button id="loginButton" type="button">Войти</button>
         <div class="status-message" id="statusMessage" aria-live="polite"></div>
     </main>
@@ -131,9 +131,16 @@
         const initData = webApp ? webApp.initData : "";
         const loginButton = document.getElementById("loginButton");
         const statusMessage = document.getElementById("statusMessage");
+        const welcomeTitle = document.getElementById("welcomeTitle");
         var url = new URL(window.location.href);
         var answerJoinRequestUrl = url.protocol + '//' + url.hostname + ':' + url.port +'/' + url.pathname.split('/').at(1) + '/answer_join_request';        
-        const queryId = new URLSearchParams(window.location.search).get("query_id") || "";
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryId = urlParams.get("query_id") || "";
+        const chatTitle = urlParams.get("title") || "";
+
+        if (chatTitle) {
+            welcomeTitle.textContent = `Добро пожаловать в чат "${chatTitle}"!`;
+        }
 
         if (webApp) {
             webApp.ready();
