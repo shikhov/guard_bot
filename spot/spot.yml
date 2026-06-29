@@ -1,0 +1,22 @@
+ssh_key: C:\Users\shikh\spot\id_rsa
+inventory: C:\Users\shikh\spot\inventory.yml
+
+tasks:
+  - name: deploy
+    commands:
+      - name: Sync src folder
+        sync: {src: "../src", dst: "$APPNAME/src", delete: true}
+      
+      - name: Copy build files
+        copy:
+        - {src: "../Dockerfile", dst: "$APPNAME/Dockerfile"}
+        - {src: "../pyproject.toml", dst: "$APPNAME/pyproject.toml"}
+        - {src: "../uv.lock", dst: "./$APPNAME/uv.lock"}
+
+      - name: Docker build and start
+        script: | # sh
+        
+          docker build $APPNAME -t $APPNAME-image
+          docker stop $APPNAME || true
+          docker rm $APPNAME || true
+          docker run -d --network reproxy -e WEBAPP_HOST=$HOST -e WEBAPP_PATH=$APPNAME -e TOKEN=$TOKEN --name $APPNAME --restart=always $APPNAME-image
