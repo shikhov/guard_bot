@@ -29,7 +29,8 @@ vercel.json                 # настройки деплоя Vercel
 | Переменная   | Обязательно | Описание |
 |--------------|-------------|----------|
 | `TOKEN`      | да          | Токен бота от @BotFather |
-| `WEBAPP_URL` | да          | Публичный базовый URL деплоя, напр. `https://guard-bot.vercel.app` |
+| `VERCEL_PROJECT_PRODUCTION_URL` | автоматически | Домен production (напр. `guard-bot.vercel.app`); Vercel подставляет самостоятельно БЕЗ схемы. Схема `https://` добавляется в коде. Из него берётся `WEBAPP_URL` |
+| `WEBAPP_URL` | нет         | Ручное переопределение базового URL (для dev/локального теста). По умолчанию = `VERCEL_PROJECT_PRODUCTION_URL` |
 | `WEBHOOK_URL`| нет         | URL вебхука; по умолчанию `WEBAPP_URL + "/webhook"` |
 
 ## Как это работает
@@ -58,7 +59,7 @@ TOKEN=... WEBAPP_URL=http://localhost:8000 uvicorn api.index:app --reload --port
 ## Деплой на Vercel
 
 1. Импортируйте репозиторий в Vercel (или `vercel deploy` из CLI).
-2. Задайте переменные окружения `TOKEN` и `WEBAPP_URL`.
+2. Задайте переменную окружения `TOKEN`. Базовый URL (`WEBAPP_URL`) берётся из автоматического `VERCEL_PROJECT_PRODUCTION_URL`; отдельно его указывать не нужно.
 3. Vercel сам определит Python/FastAPI-приложение по `api/index.py`.
 4. Вебхук зарегистрируется на первом холодном старте и будет поддерживаться cron'ом. При желании можно один раз вызвать `POST /setup-webhook`, чтобы не ждать cron.
 

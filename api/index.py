@@ -28,7 +28,16 @@ logging.getLogger("aiogram.event").setLevel(logging.WARNING)
 
 # --- Настройки из переменных окружения (Vercel) ------------------------------
 TOKEN = os.getenv("TOKEN", "").strip()
-WEBAPP_URL = os.getenv("WEBAPP_URL", "").strip().rstrip("/")
+
+# Vercel подставляет VERCEL_PROJECT_PRODUCTION_URL автоматически (только в
+# production-деплое) и БЕЗ схемы — например "guard-bot.vercel.app". Поэтому при
+# использовании этой переменной добавляем https://. Явный WEBAPP_URL можно задать
+# со схемой (удобно для локального запуска / dev).
+_PRODUCTION_URL = os.getenv("VERCEL_PROJECT_PRODUCTION_URL", "").strip()
+if _PRODUCTION_URL and "://" not in _PRODUCTION_URL:
+    _PRODUCTION_URL = f"https://{_PRODUCTION_URL}"
+
+WEBAPP_URL = os.getenv("WEBAPP_URL", _PRODUCTION_URL).strip().rstrip("/")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", f"{WEBAPP_URL}/webhook").strip().rstrip("/")
 
 HTML_DIR = Path(__file__).resolve().parent / "html"
