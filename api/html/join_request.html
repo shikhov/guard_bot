@@ -167,7 +167,7 @@
         const statusMessage = document.getElementById("statusMessage");
         const welcomeTitle = document.getElementById("welcomeTitle");
         var url = new URL(window.location.href);
-        var answerJoinRequestUrl = url.protocol + '//' + url.hostname + ':' + url.port +'/' + url.pathname.split('/').at(1) + '/answer_join_request';        
+        var answerJoinRequestUrl = url.origin + '/answer_join_request';        
         const urlParams = new URLSearchParams(window.location.search);
         const queryId = urlParams.get("query_id") || "";
         const chatTitle = urlParams.get("title") || "";

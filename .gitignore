@@ -1,4 +1,5 @@
 # Python-generated files
+# Python-generated files
 __pycache__/
 *.py[oc]
 build/
@@ -8,6 +9,25 @@ wheels/
 .vscode
 env.yml
 .env
+.env.local
 
 # Virtual environments
 .venv
+
+# Vercel
+.vercel
+node_modules
+
+# Local validation temp files
+val_result.txt
+build/
+dist/
+wheels/
+*.egg-info
+.vscode
+env.yml
+.env
+.env.local
+.venv
+.vercel
+node_modules
