@@ -1,0 +1,27 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "deploy Frankfurt ARM",
+            "type": "shell",
+            "command": "cd spot && spot --task=deploy -t=oracle-arm -e HOST:ffarm.shikhov.uk:8443 -vv ",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "deploy ffarm-gb Cloudflare",
+            "type": "shell",
+            "command": "cd spot && spot --task=deploy -t=oracle-arm -e HOST:ffarm-gb.shikhov.uk:8443 -vv ",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
+}

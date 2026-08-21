@@ -1,0 +1,11 @@
+{
+  "name": "telegram-join-request-bot",
+  "private": true,
+  "cloudflare": {
+    "bindings": {
+      "TELEGRAM_BOT_TOKEN": {
+        "description": "Telegram bot token from @BotFather. Store it as a Secret."
+      }
+    }
+  }
+}

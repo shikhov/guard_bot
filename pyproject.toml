@@ -1,9 +1,12 @@
 [project]
-name = "rt-bot"
+name = "telegram-join-request-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Telegram join request Mini App bot running on Cloudflare Workers"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "aiogram>=3.29.0",
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "workers-py>=1.1.0",
 ]

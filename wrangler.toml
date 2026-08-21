@@ -1,0 +1,11 @@
+name = "telegram-join-request-bot"
+main = "src/entry.py"
+compatibility_date = "2026-08-21"
+compatibility_flags = ["python_workers"]
+
+[secrets]
+required = ["TELEGRAM_BOT_TOKEN"]
+
+[assets]
+directory = "./src/webapp/html"
+binding = "ASSETS"
