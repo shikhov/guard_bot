@@ -396,7 +396,7 @@ async function handleWebhook(request: Request, env: Env): Promise<Response> {
       await sendChatJoinRequestWebApp(env.TOKEN, joinRequest.query_id, webAppUrl);
     } catch (err) {
       console.error("Failed to send web app:", err);
-      return json({ ok: false }, 555);
+      // return json({ ok: false }, 555);
     }
   }
 
