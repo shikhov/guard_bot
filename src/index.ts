@@ -366,7 +366,7 @@ async function handleAnswerJoinRequest(request: Request, env: Env): Promise<Resp
 
 async function handleWebhook(request: Request, env: Env): Promise<Response> {
   if (!env.TOKEN) {
-    return json({ ok: false, error: "TOKEN not configured" }, 500);
+    return json({ ok: false, error: "TOKEN not configured" }, 556);
   }
 
   const baseUrl = new URL(request.url).origin;
@@ -396,7 +396,7 @@ async function handleWebhook(request: Request, env: Env): Promise<Response> {
       await sendChatJoinRequestWebApp(env.TOKEN, joinRequest.query_id, webAppUrl);
     } catch (err) {
       console.error("Failed to send web app:", err);
-      return json({ ok: false }, 500);
+      return json({ ok: false }, 555);
     }
   }
 
