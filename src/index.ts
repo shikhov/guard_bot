@@ -46,34 +46,21 @@ async function setWebhook(token: string, url: string): Promise<void> {
   });
 }
 
-async function answerChatJoinRequest(token: string, queryId: string): Promise<void> {
-  await telegramApi(token, "answerChatJoinRequest", {
-    chat_join_request_id: queryId,
+async function answerChatJoinRequestQuery(token: string, queryId: string): Promise<void> {
+  await telegramApi(token, "answerChatJoinRequestQuery", {
+    chat_join_request_query_id: queryId,
     result: "approve",
   });
 }
 
 async function sendChatJoinRequestWebApp(
   token: string,
-  chatId: number,
+  queryId: string,
   webAppUrl: string,
 ): Promise<void> {
-  // Отправляем пользователю Web App через кнопку в личном сообщении.
-  // Telegram не имеет прямого метода sendChatJoinRequestWebApp, поэтому
-  // используем sendMessage с InlineKeyboardButton типа web_app.
-  await telegramApi(token, "sendMessage", {
-    chat_id: chatId,
-    text: "Нажмите кнопку, чтобы подтвердить вступление в чат:",
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Войти",
-            web_app: { url: webAppUrl },
-          },
-        ],
-      ],
-    },
+  await telegramApi(token, "sendChatJoinRequestWebApp", {
+    chat_join_request_query_id: queryId,
+    web_app_url: webAppUrl,
   });
 }
 
@@ -368,7 +355,7 @@ async function handleAnswerJoinRequest(request: Request, env: Env): Promise<Resp
   }
 
   try {
-    await answerChatJoinRequest(env.TOKEN, queryId);
+    await answerChatJoinRequestQuery(env.TOKEN, queryId);
   } catch (err) {
     console.error("Failed to answer join request:", err);
     return json({ ok: false, error: "Unknown error" }, 500);
@@ -400,17 +387,13 @@ async function handleWebhook(request: Request, env: Env): Promise<Response> {
 
   const joinRequest = update.chat_join_request;
   if (joinRequest?.query_id) {
-    const chatId = joinRequest.user_chat_id ?? joinRequest.from?.id;
-    if (!chatId) {
-      return json({ ok: false, error: "Missing user chat id" }, 400);
-    }
     const params = new URLSearchParams({
       query_id: joinRequest.query_id,
       title: joinRequest.chat?.title ?? "",
     });
     const webAppUrl = `${baseUrl}/join_request?${params.toString()}`;
     try {
-      await sendChatJoinRequestWebApp(env.TOKEN, chatId, webAppUrl);
+      await sendChatJoinRequestWebApp(env.TOKEN, joinRequest.query_id, webAppUrl);
     } catch (err) {
       console.error("Failed to send web app:", err);
       return json({ ok: false }, 500);
