@@ -1,17 +1,18 @@
 # guard-bot
 
-Telegram-бот для подтверждения заявок на вступление в чат (join requests), развёрнутый на **Vercel** (serverless).
+Telegram-бот для подтверждения заявок на вступление в чат (join requests), развёрнутый на **Cloudflare Workers** (serverless).
 
-Проект переписан с self-hosted (aiogram long-polling + aiohttp + Docker) на **aiogram webhook + FastAPI**, потому что Vercel не умеет держать постоянный процесс поллинга.
+Проект переписан с self-hosted (aiogram long-polling + aiohttp + Docker) → Vercel (aiogram webhook + FastAPI) → **Cloudflare Workers (TypeScript)**.
 
 ## Структура
 
 ```
-api/
-  index.py                  # FastAPI-приложение (точка входа ASGI)
-  html/join_request.html    # Web App-страница для подтверждения входа
-crons.json                  # Vercel Cron: часовое обновление вебхука
-vercel.json                 # настройки деплоя Vercel
+src/
+  index.ts                  # Основной обработчик Worker (fetch + scheduled)
+  validation.ts             # Валидация Telegram Web App initData (HMAC-SHA256)
+wrangler.toml               # Конфигурация Cloudflare Worker + Cron Triggers
+package.json                # Скрипты и зависимости Node.js
+tsconfig.json               # Настройки TypeScript
 ```
 
 ## Эндпоинты
@@ -24,43 +25,51 @@ vercel.json                 # настройки деплоя Vercel
 | POST  | `/setup-webhook`       | (Пере)регистрация URL вебхука |
 | GET   | `/`                    | health-check |
 
-## Переменные окружения (Vercel Project Settings → Environment Variables)
+## Переменные окружения (Cloudflare Dashboard → Workers → Settings → Variables)
 
 | Переменная   | Обязательно | Описание |
 |--------------|-------------|----------|
 | `TOKEN`      | да          | Токен бота от @BotFather |
-| `VERCEL_PROJECT_PRODUCTION_URL` | автоматически | Домен production (напр. `guard-bot.vercel.app`); Vercel подставляет самостоятельно БЕЗ схемы. Схема `https://` добавляется в коде. Из него берётся `WEBAPP_URL` |
-| `WEBAPP_URL` | нет         | Ручное переопределение базового URL (для dev/локального теста). По умолчанию = `VERCEL_PROJECT_PRODUCTION_URL` |
-| `WEBHOOK_URL`| нет         | URL вебхука; по умолчанию `WEBAPP_URL + "/webhook"` |
+| `CF_WORKER_URL` | нет      | URL Worker (напр. `https://guard-bot.your-subdomain.workers.dev`). Нужен только для перерегистрации вебхука из Cron-обработчика (scheduled). В fetch-запросах базовый URL определяется автоматически из `request.url` |
 
 ## Как это работает
 
 1. Пользователь запрашивает вступление в закрытый чат.
 2. Telegram доставляет апдейт `chat_join_request` на `POST /webhook`.
-3. Бот отправляет пользователю ссылку на Web App (`/join_request?query_id=...&title=...`).
+3. Бот отправляет пользователю сообщение с кнопкой Web App (`/join_request?query_id=...&title=...`).
 4. Пользователь открывает Web App и жмёт «Войти».
 5. Web App вызывает `POST /answer_join_request` с подписанными `initData` и `query_id`.
-6. Сервер проверяет подпись через `safe_parse_webapp_init_data` и подтверждает заявку через Telegram API.
+6. Сервер проверяет подпись через HMAC-SHA256 (см. `src/validation.ts`) и подтверждает заявку через Telegram API.
 
-Вебхук автоматически настраивается при холодном старте инстанса (idempotent — только если URL отличается) и дополнительно перерегистрируется раз в час с помощью Vercel Cron (`crons.json`).
+Вебхук автоматически настраивается через `POST /setup-webhook` или в Cron Trigger (раз в час, `wrangler.toml` → `[triggers]`). Для Cron нужно задать `CF_WORKER_URL` (без него scheduled-обработчик пропустит перерегистрацию).
 
 ## Локальный запуск
 
 ```bash
 # установка зависимостей
-uv sync            # или: pip install -e .
+npm install
 
-# запуск приложения
-TOKEN=... WEBAPP_URL=http://localhost:8000 uvicorn api.index:app --reload --port 8000
+# создание .dev.vars с переменными окружения
+cp .env.example .dev.vars
+
+# локальный запуск
+npm run dev
 ```
 
-Для полного локального теста вебхука Telegram нужен публичный адрес (например, через `ngrok`/`localtunnel`): укажите его в `WEBAPP_URL`/`WEBHOOK_URL` и вызовите `POST /setup-webhook`.
+Для полного локального теста вебхука Telegram нужен публичный адрес (например, через `ngrok`/`localtunnel`): вызовите `POST /setup-webhook` — базовый URL определится автоматически из запроса.
 
-## Деплой на Vercel
+## Деплой на Cloudflare Workers
 
-1. Импортируйте репозиторий в Vercel (или `vercel deploy` из CLI).
-2. Задайте переменную окружения `TOKEN`. Базовый URL (`WEBAPP_URL`) берётся из автоматического `VERCEL_PROJECT_PRODUCTION_URL`; отдельно его указывать не нужно.
-3. Vercel сам определит Python/FastAPI-приложение по `api/index.py`.
-4. Вебхук зарегистрируется на первом холодном старте и будет поддерживаться cron'ом. При желании можно один раз вызвать `POST /setup-webhook`, чтобы не ждать cron.
+1. Импортируйте репозиторий в Cloudflare Pages/Dashboard (или `npx wrangler deploy` из CLI).
+2. Задайте переменную окружения `TOKEN`. При необходимости задайте `CF_WORKER_URL` для перерегистрации вебхука по расписанию.
+3. Включите Cron Trigger в настройках Worker.
+4. Вызовите `POST /setup-webhook` один раз — базовый URL определится автоматически из запроса.
 
-> Примечание: метод `Bot.send_chat_join_request_web_app` в теле обработчика перенесён из исходной версии как есть (в оригинале предполагалась кастомная сборка). Если он отсутствует в вашей версии aiogram, замените его на штатный способ отправки Web App (например, кнопку во вложении к личному сообщению).
+### Команды
+
+| Команда        | Описание |
+|----------------|----------|
+| `npm install`  | Установка зависимостей |
+| `npm run dev`  | Локальный запуск (wrangler dev) |
+| `npm run deploy` | Деплой на Cloudflare |
+| `npm run typecheck` | Проверка типов TypeScript |
